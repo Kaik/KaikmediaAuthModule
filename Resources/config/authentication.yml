@@ -1,0 +1,13 @@
+services:
+
+    # kaikmedia_auth_module.authentication_method.google:
+    #     class: Kaikmedia\AuthModule\AuthenticationMethod\GoogleAuthenticationMethod
+    #     tags:
+    #         - { name: zikula.authentication_method, alias: 'kmgoogle' }
+
+    kaikmedia_auth_module.authentication_method.facebook:
+        class: Kaikmedia\AuthModule\AuthenticationMethod\FacebookAuthenticationMethod
+        arguments:
+            - '@zikula_extensions_module.api.variable'
+        tags:
+            - { name: zikula.authentication_method, alias: 'kaikmedia_auth_facebook' }

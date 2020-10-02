@@ -1,0 +1,45 @@
+services:
+# Basics
+
+    kaikmedia_auth_module.link_container:
+        class: Kaikmedia\AuthModule\Container\LinkContainer
+        arguments:
+          - "@translator.default"
+          - "@router"
+          - "@kaikmedia_auth_module.access_manager"
+          - "@=service('zikula_extensions_module.api.variable').get('KaikmediaAuthModule', 'enablecategorization', true)"
+        tags:
+          - { name: zikula.link_container }
+
+#Managers
+
+    kaikmedia_auth_module.access_manager:
+        class: Kaikmedia\AuthModule\Security\AccessManager
+        arguments: 
+          - "@request_stack"
+          - "@translator.default"
+          - "@zikula_users_module.current_user"          
+          - "@zikula_permissions_module.api.permission"
+
+# HELPERS
+
+    kaikmedia_auth_module.helper.facebook_helper:
+        class: Kaikmedia\AuthModule\Helper\FacebookHelper
+        arguments:
+            - '@session'
+            - '@request_stack'
+            - '@router'
+            - '@zikula_oauth_module.mapping_repository'
+            - '@zikula_extensions_module.api.variable'
+
+    kaikmedia_auth_module.helper.user_registration_helper:
+        class: Kaikmedia\AuthModule\Helper\UserRegistrationHelper
+        arguments:
+            - "@zikula_zauth_module.authentication_mapping_repository"
+            - "@zikula_users_module.user_repository"
+            - '@zikula_extensions_module.api.variable'
+            - "@validator"
+            - "@zikula_zauth_module.api.password"
+
+# FIELDS
+

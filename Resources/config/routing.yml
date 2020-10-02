@@ -1,0 +1,3 @@
+kaikmediaauthmodule:
+   resource: "@KaikmediaAuthModule/Controller"
+   type:     annotation
