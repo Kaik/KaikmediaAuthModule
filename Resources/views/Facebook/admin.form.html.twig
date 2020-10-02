@@ -1,0 +1,207 @@
+{# preferences #}
+{% extends 'KaikmediaAuthModule:Base:admin.html.twig' %}
+{% block header %}
+    {% set settings='settings' %}
+    {{ parent() }}
+{% endblock %} 
+{% block title %}
+    {% set title_icon="<i class='fa fa-user-secret'></i>" %}
+    {% set title=__('Facebook Auth') %}
+    {{ parent() }}
+{% endblock %}
+{% block content %}
+    <div id="km_auth_admin_facebook" class="col-md-12 clearfix">
+    <div class="alert alert-info">
+        <p>{{ __('Application setup at') }}: <a href="https://developers.facebook.com/apps/">https://developers.facebook.com/apps/</a></p>
+
+        <ul>
+            <li>{{ __('Click "+ Add a New App" button') }}</li>
+            <li>{{ __('Choose a display name and enter your email. Click "Create App ID" and complete the Captcha.') }}</li>
+            <li>{{ __('Next to "Facebook Login" click "Get Started" button.') }}</li>
+            <li>{{ __('Do not do "QuickStart" - click the Settings link under Facebook Login in the menu on the left side.') }}</li>
+        </ul>
+
+        {{ __('Add two') }} <code>Valid OAuth redirect URIs</code>:
+        <ul>
+            <li>{{ url('zikulausersmodule_access_login') }}</li>
+            <li>{{ url('zikulausersmodule_registration_register') }}</li>
+        </ul>
+
+        {{ __('Complete:') }}:
+        <ul>
+            <li>{{ __('Click Save button.') }}</li>
+            <li>{{ __('Click App Review in side menu.') }}</li>
+            <li>{{ __('Enable "Make Public".') }}</li>
+            <li>{{ __('Obtain the App ID and Secret from the Dashboard.') }}</li>
+        </ul>
+    </div>
+    {% form_theme form with [
+        'ZikulaFormExtensionBundle:Form:bootstrap_3_zikula_admin_layout.html.twig',
+        'KaikmediaAuthModule:Form:radio.html.twig'
+    ] %}
+        {# 'ZikulaFormExtensionBundle:Form:form_div_layout.html.twig' #}
+
+        {{ form_start(form) }}
+        {{ form_errors(form) }}
+        <fieldset>
+            <legend>{{ __('Enable facebook auth') }}</legend>
+            <div class="form-group">
+                {{ form_label(form.enabled) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.enabled, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                </div>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>{{ __('Facebook settings') }}</legend>
+            <div class="form-group">
+                {{ form_label(form.clientId) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.clientId) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Your application ID. If you don't have one find it in the App dashboard or go there to create a new app. Defaults to null.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.secretId) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.secretId) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Facebook app secret ID")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.api_version) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.api_version) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Determines which versions of the Graph API and any API dialogs or plugins are invoked when using the .api() and .ui() functions. Valid values are determined by currently available versions, such as 'v2.0'. This is a required parameter.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.cookie) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.cookie, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Determines whether a cookie is created for the session or not. If enabled, it can be accessed by server-side code. Defaults to false.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.status) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.status, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Determines whether the current login status of the user is freshly retrieved on every page load. If this is disabled, that status will have to be manually retrieved using .getLoginStatus(). Defaults to false.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.xfbml) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.xfbml, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Determines whether XFBML tags used by social plugins are parsed, and therefore whether the plugins are rendered or not. Defaults to false.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.frictionlessRequests) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.frictionlessRequests, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Frictionless Requests are available to games on Facebook.com or on mobile web using the JavaScript SDK. This parameter determines whether they are enabled. Defaults to false.")}}
+                    </span>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>{{ __('Login-register button settings') }}</legend>
+            <div class="form-group">
+                {{ form_label(form.button_size) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.button_size, {'attr': {'class': '' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Button size.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.button_type) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.button_type, {'attr': {'class': '' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Button type.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.button_layout) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.button_layout, {'attr': {'class': '' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Button Layout.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.auto_logout_link) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.auto_logout_link, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                        {{__("Enable Logout Button.")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.use_continue_as) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.use_continue_as, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Include name and profile picture when user is signed into.")}}
+                    </span>
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-9">
+                {{ form_widget(form.save, {'attr': {'class': 'btn btn-primary'},  'label': __('Save')}) }}
+                {# {{ form_widget(form.cancel) }} #}
+            </div>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+{% block footer %}
+    {{ parent() }}
+{% endblock %}

@@ -1,0 +1,72 @@
+{# preferences #}
+{% extends 'KaikmediaAuthModule:Base:admin.html.twig' %}
+{% block header %}
+    {% set settings='settings' %}
+    {{ parent() }}
+{% endblock %} 
+{% block title %}
+    {% set title_icon="<i class='fa fa-user-secret'></i>" %}
+    {% set title=__('Preferences Auth') %}
+    {{ parent() }}
+{% endblock %}
+{% block content %}
+    <div id="km_auth_admin_preferences" class="col-md-12 clearfix">
+    {% form_theme form with [
+        'ZikulaFormExtensionBundle:Form:bootstrap_3_zikula_admin_layout.html.twig',
+        'KaikmediaAuthModule:Form:radio.html.twig'
+    ] %}
+        {# 'ZikulaFormExtensionBundle:Form:form_div_layout.html.twig' #}
+
+        {{ form_start(form) }}
+        {{ form_errors(form) }}
+    <div id="km_auth_admin_preferences" class="col-md-12 clearfix">    
+        <div class="form-group">
+            {{ form_label(form.enabled) }}
+            <div class="col-sm-9">            
+                {{ form_widget(form.enabled, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+            </div>
+            <div class="col-sm-9 pull-right">
+                <span class="small">            
+                    {{__("Enable module")}}
+                </span>
+            </div>
+        </div>
+        <div class="form-group">
+            {{ form_label(form.multipleSameAccountsAllowed) }}
+            <div class="col-sm-9">            
+                {{ form_widget(form.multipleSameAccountsAllowed, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+            </div>
+            <div class="col-sm-9 pull-right">
+                <span class="small">            
+                    {{ __("If this is set to true there will be no unique email check.") }}
+                    {{ __("In case fb email is detected and there is no account connected, an account choser will be displayed with.") }}
+                    {{ __("As well as an option to create new account.") }}
+                </span>
+            </div>
+        </div>
+        <div class="form-group">
+            {{ form_label(form.registerAsNative) }}
+            <div class="col-sm-9">            
+                {{ form_widget(form.registerAsNative, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+            </div>
+            <div class="col-sm-9 pull-right">
+                <span class="small">            
+                    {{ __("This setting will override default zikula worflow.") }}
+                    {{ __("Created account will have selected native authentication.") }}
+                    {{ __("Account will be created active with an empty password.") }}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-9">
+            {{ form_widget(form.save, {'attr': {'class': 'btn btn-primary'},  'label': __('Save')}) }}
+            {# {{ form_widget(form.cancel) }} #}
+        </div>
+    </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+{% block footer %}
+    {{ parent() }}
+{% endblock %}

@@ -1,0 +1,19 @@
+{# default admin/manager template #}
+{% extends 'KaikmediaAuthModule:Base:admin.html.twig' %}
+{% block header %}
+    {% set settings='settings' %}
+    {{ parent() }}
+{% endblock %} 
+{% block title %}
+    {% set title_icon="<i class='fa fa-user-secret'></i>" %}
+    {% set title=__('Admin Auth') %}
+    {{ parent() }}
+{% endblock %}
+{% block content %}
+    <div id="km_auth_admin_index" class="col-md-12 clearfix">    
+  
+    </div>
+{% endblock %}
+{% block footer %}
+    {{ parent() }}
+{% endblock %}

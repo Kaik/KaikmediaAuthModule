@@ -1,0 +1,31 @@
+<script type="text/javascript">/* <![CDATA[ */
+var KaikMedia = KaikMedia || {};
+KaikMedia.Auth = KaikMedia.Auth || {};
+KaikMedia.Auth.Config = KaikMedia.Auth.Config || {};
+( function() {
+    KaikMedia.Auth.Config.FB = (function () {
+
+        const config = {{ config|json_encode|raw }};
+
+        function getVar(name = false, def = false) {
+            if (!name) {
+                return; 
+            }
+            if (config.hasOwnProperty(name)) {
+                return config[name];
+            } else {
+                return def;
+            }
+        };
+
+        function getAll() {
+            return config;
+        };
+
+        return {
+			getAll: getAll,
+			getVar: getVar,
+		};
+	})();
+})();
+/* ]]> */</script>
