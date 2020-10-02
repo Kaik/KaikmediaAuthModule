@@ -183,7 +183,7 @@ class FacebookController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
         }
 
-        $account = (int) $request->request->get('account', 8843);
+        $account = (int) $request->request->get('account', null);
         if (!$account) {
             return new JsonResponse(['status' => 'error', 'message' => $this->__('Missing account id.')], 400);
         }
