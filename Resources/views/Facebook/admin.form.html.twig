@@ -137,6 +137,14 @@
 
         <fieldset>
             <legend>{{ __('Login-register button settings') }}</legend>
+            <div class="alert alert-info">
+                <p>{{ __('This settings are used to genereate an anchor element that will later be converted into facebook button.') }}</p>
+                <p>{{ __('You can use a element manually and wherever you want.') }} {{ __('Button creation is reacting based on anchor text') }}</p>
+                <p>{{ __('simple button text is kaikmedia_auth_facebook_button_') }}</p>
+                <p>{{ __('for example <a> kaikmedia_auth_facebook_button_ </a> will use default settings') }}</p>
+                <p>{{ __('Settings are separated by "-" and order is important size-type-layout-auto_link-use_continue_as') }}</p>
+                <p>{{ __('for example kaikmedia_auth_facebook_button_large-continue_with-rounded-no-yes') }}</p>
+            </div>
             <div class="form-group">
                 {{ form_label(form.button_size) }}
                 <div class="col-sm-9">            
@@ -189,6 +197,43 @@
                 <div class="col-sm-9 pull-right">
                     <span class="small">            
                     {{__("Include name and profile picture when user is signed into.")}}
+                    </span>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>{{ __('Other settings') }}</legend>
+            <div class="form-group">
+                {{ form_label(form.redirectHomePaths) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.redirectHomePaths, {'attr': {'class': '' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                        {{__("Comma separated list of paths that will cause redirect to home after login instead of page refresh.")}}
+                        {{__("Default: /en/login,/en/register ")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.download_user_avatar) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.download_user_avatar, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("This will automatically use facebook picture if exist as user avatar. -  not implemented yet")}}
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.enable_facebook_user_settings) }}
+                <div class="col-sm-9">            
+                    {{ form_widget(form.enable_facebook_user_settings, {'attr': {'class': 'btn btn-primary radio-inline' }}) }}
+                </div>
+                <div class="col-sm-9 pull-right">
+                    <span class="small">            
+                    {{__("Facebook settings page for user. -  not implemented yet")}}
                     </span>
                 </div>
             </div>

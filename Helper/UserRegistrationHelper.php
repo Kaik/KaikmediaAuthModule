@@ -12,6 +12,7 @@
 
 namespace Kaikmedia\AuthModule\Helper;
 
+use Kaikmedia\AuthModule\Constant;
 use League\OAuth2\Client\Provider\FacebookUser;
 
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -93,6 +94,7 @@ class UserRegistrationHelper
         $userEntity->setUname($username);
         $userEntity->setEmail($FacebookUser->getEmail());
 
+        // i'm not sure why this thing is set here...
         $userEntity->setAttribute(UsersConstant::AUTHENTICATION_METHOD_ATTRIBUTE_KEY, OAuthConstant::ALIAS_FACEBOOK);
         // we need that it will be changed to created user uid 
         // unless problems will occur like RegistrationEvents::FULL_USER_CREATE_VETO :)
@@ -208,6 +210,11 @@ class UserRegistrationHelper
      */
     public function mapUserAccount(array $data)
     {
+        if (!$this->variableApi->get(Constant::MODNAME, 'registerAsNative', false)) {
+
+            return;
+        }
+
         $mapping = new AuthenticationMappingEntity();
         $mapping->setUid($data['uid']);
         $mapping->setUname($data['uname']);
@@ -221,18 +228,24 @@ class UserRegistrationHelper
         }
 
         // set by settings ? default Native Either
+        // @TODO need to get default native method here...
+        // $method = 
         $mapping->setMethod(ZAuthConstant::AUTHENTICATION_METHOD_EITHER);
+
         $mapping->setVerifiedEmail(true);
         $errors = $this->validator->validate($mapping);
+
         // email address constrain validation
-        // @TODO should be turned off in case multiple accounts allowed
-        if (count($errors) > 0) {
-            $errorsTxt = '';
-            foreach ($errors as $error) {
-                $errorsTxt .= $error->getMessage(). ' ';
+        // @TODO should be turned off in case multiple accounts are allowed
+        if (!$this->variableApi->get(Constant::MODNAME, 'multipleSameAccountsAllowed', false)) {
+            if (count($errors) > 0) {
+                $errorsTxt = '';
+                foreach ($errors as $error) {
+                    $errorsTxt .= $error->getMessage(). ' ';
+                }
+                // throw error
+                throw new \Exception($errorsTxt);
             }
-            // throw error 
-            throw new \Exception($errorsTxt);
         }
         $this->mappingRepository->persistAndFlush($mapping);
 

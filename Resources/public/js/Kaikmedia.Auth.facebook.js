@@ -8,16 +8,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 ( function($, Routing, Zikula) {
 	KaikMedia.Auth.facebook = (function () {
 		var $modal;
-		// @todo - move to settings
-		var redirectHomePaths = [
-			'/pl/login',
-			'/en/login',
-			'/pl/zarejestruj',
-			'/en/register',
-		];
 		// @todo - add multi accouts feature
-		// settings
-		var multipleAccountsAllowed = true;
 
 		async function init() {
 			return new Promise(async (resolve) => {
@@ -36,6 +27,21 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				resolve(FB);
 			});
 		};
+
+		function areMultipleAccountsAllowed() {
+			let multipleAccountsAllowed = KaikMedia.Auth.Config.Global.getVar('multipleSameAccountsAllowed', false);
+			if (!multipleAccountsAllowed || multipleAccountsAllowed == '0') {
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+		function getRedirectToHomePathsArray() {
+			let paths = KaikMedia.Auth.Config.FB.getVar('redirectHomePaths', '');
+
+			return paths.split(',');
+		}
 
 		function loadButtons() {
 			$buttons = $("a:contains('kaikmedia_auth_facebook_button_')");
@@ -114,7 +120,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 					// autologin if only one account found
 					// additional disable option if duplicates are allowed
 					// user will be able to select create new account (duplicate)
-					if (foundAccounts.length == 1 && !multipleAccountsAllowed) {
+					if (foundAccounts.length == 1 && !areMultipleAccountsAllowed()) {
 						await connectLoginRedirectAction(accessToken, foundAccounts[0].uid);
 
 						return true;
@@ -261,6 +267,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Redirecting...')});
 
 			var currentPathName = window.location.pathname;
+			var redirectHomePaths = getRedirectToHomePathsArray();
 			if (redirectHomePaths.includes(currentPathName)) {
 				window.location.href = '/';
 			} else {
@@ -444,7 +451,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				$chooser.append(getAccountPreview(accounts[i]));
 			}
 
-			if (multipleAccountsAllowed) {
+			if (areMultipleAccountsAllowed()) {
 				// @todo add new account info
 			}
 

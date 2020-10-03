@@ -95,6 +95,7 @@ class AddFacebookJSListener implements EventSubscriberInterface
             'cookie' => $settings['cookie'],
             'status' => $settings['status'],
             'frictionlessRequests' => $settings['frictionlessRequests'],
+            'redirectHomePaths' => $settings['redirectHomePaths'],
         ];
 
         $config = array_map('htmlspecialchars', $config);

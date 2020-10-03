@@ -14,6 +14,7 @@ namespace Kaikmedia\AuthModule\Form\Type;
 use Kaikmedia\AuthModule\Constant;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -31,6 +32,8 @@ class AdminFacebookType extends AbstractType
             'multiple' => false,
             'expanded' => true,
             'required' => true])  
+
+
             ->add('clientId', TextType::class,[
                 'required' => false,
             ])
@@ -106,7 +109,17 @@ class AdminFacebookType extends AbstractType
             ->add('use_continue_as', ChoiceType::class, ['choices' => ['Off' => false, 'On' => true],
             'multiple' => false,
             'expanded' => true,
+            'required' => true]) 
+            ->add('redirectHomePaths', TextareaType::class, [
             'required' => true])              
+            ->add('download_user_avatar', ChoiceType::class, ['choices' => ['Off' => false, 'On' => true],
+            'multiple' => false,
+            'expanded' => true,
+            'required' => true])            
+            ->add('enable_facebook_user_settings', ChoiceType::class, ['choices' => ['Off' => false, 'On' => true],
+            'multiple' => false,
+            'expanded' => true,
+            'required' => true])            
         ;
     }
 
