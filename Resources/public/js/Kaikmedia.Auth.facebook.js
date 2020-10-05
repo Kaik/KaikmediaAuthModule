@@ -5,7 +5,7 @@
 var KaikMedia = KaikMedia || {};
 KaikMedia.Auth = KaikMedia.Auth || {};
 
-( function($, Routing, Zikula) {
+( function($, Routing, Translator, Zikula) {
 	KaikMedia.Auth.facebook = (function () {
 		var $modal;
 		// @todo - add multi accouts feature
@@ -28,56 +28,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			});
 		};
 
-		function areMultipleAccountsAllowed() {
-			let multipleAccountsAllowed = KaikMedia.Auth.Config.Global.getVar('multipleSameAccountsAllowed', false);
-			if (!multipleAccountsAllowed || multipleAccountsAllowed == '0') {
-				return false;
-			} else {
-				return true;
-			}
-		}
-
-		function getRedirectToHomePathsArray() {
-			let paths = KaikMedia.Auth.Config.FB.getVar('redirectHomePaths', '');
-
-			return paths.split(',');
-		}
-
-		function loadButtons() {
-			$buttons = $("a:contains('kaikmedia_auth_facebook_button_')");
-			$buttons.each((index, element) => {
-				$(element).hide(); // hide it... kind of helps...
-				$(element).replaceWith(generateButton(decodeButtonData($(element).text())));
-			})
-		};
-
-		function decodeButtonData(string) {
-			let data = string.substring('kaikmedia_auth_facebook_button_'.length).split("-")
-			var options = {
-				size : data[0],
-				button: data[1],
-				layout: data[2],
-				auto_logout_link: data[3] == 'yes' ? true : false,
-				use_continue_as: data[4] == 'yes' ? true : false,
-			};
-
-			return options;
-		};
-
-		function generateButton(options) {
-			$button = $('<div class="fb-login-button"></div>');
-			$button.attr('data-size', options.size);
-			$button.attr('data-button-type', options.button);
-			$button.attr('data-layout', options.layout);
-			$button.attr('auto_logout_link', options.auto_logout_link);       
-			$button.attr('data-use-continue-as', options.use_continue_as);       
-			$button.attr('scope', "public_profile,email");
-			$button.attr('onlogin', "KaikMedia.Auth.facebook.logInRegister();");
-
-			return $button;
-		};
-
-		async function logInRegister() {
+		async function getAccessToken() {
 			// var authResponse = await getAuthResponse();
 			// console.log(authResponse);
 			var authResponse = await getLoginStatus();
@@ -85,15 +36,26 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				authResponse = await login();
 				if (authResponse.status !== 'connected') {
 					// scnd try display error 
-					return;
+					return false;
 				}
-			}
+			}		
 
-			// shortcut
-			var accessToken = authResponse.authResponse.accessToken;
+			return authResponse.authResponse.accessToken;
+		}
+
+		async function logInRegister() {
+			// two accounts connected to same fb email shoudl not exist
+			// that is why we have to check if there is already connected account
+			// hmm 
+			var loggedIn = Zikula.Config.uid;
+
 			startStatusModal();
 
 			try { 
+				var accessToken = await getAccessToken();
+				if (!accessToken) {
+					throw new Error(Translator.__('Access token is missing please try again.'));
+				}
 				// so we have our auth response here with access token
 				// we will call php side and confirm everything
 				// we will collect other data as well and save them in a sesion 
@@ -104,9 +66,23 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				// quick check if zikula account mapped with fb user already exists
 				// proceed to login if true
 				var registered = await checkRegistrationStatusAction(accessToken);
-				if (registered) {
+					// two accounts connected to same fb email shoudl not exist
+					// that is why we have to check if there is already connected account
+				if (registered && loggedIn != '1' && loggedIn != registered) {
+					throw new Error(Translator.__('Different zikula account is already connected. Please logout and connect to the other account'));
+				} else if (registered) {
 					await logInZikulaAction(accessToken, registered);
 					redirectAfterLogin();
+
+					return;
+				}
+
+				// logged in means user is already logged in and wants to connect its account to fb
+				// this is allowed only on facebook settings page
+				// so we will 
+				if (loggedIn != '1' && loggedIn != registered) {
+					await connectAccountAction(accessToken, loggedIn);
+					await preferencesAction(accessToken);
 
 					return;
 				}
@@ -139,7 +115,89 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				} 
 
 			} catch (errorMessage) { showError(errorMessage); return;}
-		// the end
+		}
+
+		async function updateAvatar() {
+			try { 
+				var accessToken = await getAccessToken();
+				if (!accessToken) {
+					throw new Error(Translator.__('Access token is missing please try again.'));
+				}
+				
+				startStatusModal();
+				await startServerSideSessionAction(accessToken);
+				var response = await updateAvatarAction(accessToken);
+				if (response.status == 'success') {
+					$modal.modal('hide');
+					$('.current-user-avatar').attr('src', response.src);
+				} else {
+					throw new Error(Translator.__('Unknow error occured. Please try again.'));
+				}
+
+				return;
+			} catch (errorMessage) { showError(errorMessage); return;}
+		}
+
+		async function updateName() {
+			try { 
+				var accessToken = await getAccessToken();
+				if (!accessToken) {
+					throw new Error(Translator.__('Access token is missing please try again.'));
+				}
+				
+				startStatusModal();
+				await startServerSideSessionAction(accessToken);
+				var response = await updateNameAction(accessToken);
+				if (response.status == 'success') {
+					$modal.modal('hide');
+					$('.realname').text(response.name);
+				} else {
+					throw new Error(Translator.__('Unknow error occured. Please try again.'));
+				}
+
+				return;
+			} catch (errorMessage) { showError(errorMessage); return;}
+		}
+
+		async function disconnect() {
+			try { 
+				var accessToken = await getAccessToken();
+				if (!accessToken) {
+					throw new Error(Translator.__('Access token is missing please try again.'));
+				}
+				
+				startStatusModal();
+				await startServerSideSessionAction(accessToken);
+				await disconnectAccountAction(accessToken);
+
+				$modal.modal('hide');
+				$('#km_auth_user_facebook_preferences_display_connect_button').removeClass('hide');
+
+				return;
+			} catch (errorMessage) { showError(errorMessage); return;}
+		}
+
+		async function revoke() {
+			try { 
+				var accessToken = await getAccessToken();
+				if (!accessToken) {
+					throw new Error(Translator.__('Access token is missing please try again.'));
+				}
+				
+				startStatusModal();
+				await startServerSideSessionAction(accessToken);
+				await disconnectAccountAction(accessToken);
+				// await disconnectAccountAction(accessToken);
+				let revoked = await api('/me/permissions', 'delete');
+				if (revoked.success == true) {
+					$modal.modal('hide');
+					$('#km_auth_user_facebook_preferences_display_connect_button').removeClass('hide');
+				} else {
+					throw new Error(Translator.__('Unknow error occured. Please try again.'));
+				}
+
+				return;
+			} catch (errorMessage) { showError(errorMessage); return;}
 		}
 
 // Zikula Actions
@@ -188,6 +246,17 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			try {
 				await connectAccount(accessToken, account);
 				$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('Connected.')}));
+
+				return true;				
+			} catch (err) { throw new Error(err.responseJSON.message);}
+		}
+
+		async function disconnectAccountAction(accessToken) {
+			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Disconnecting...')});
+
+			try {
+				await disconnectAccount(accessToken);
+				$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('Disconnected.')}));
 
 				return true;				
 			} catch (err) { throw new Error(err.responseJSON.message);}
@@ -263,6 +332,21 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			}
 		}
 
+		// async function preferencesAction(accessToken) {
+		// 	$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Loading data...')});
+
+		// 	try {
+		// 		let response = await getFacebookUserAccount(accessToken);
+		// 		$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('Data loaded!')}));
+		// 		$modal.modal('hide');
+		// 		$('#km_auth_user_facebook_preferences_display_connect_button').addClass('hide');
+
+		// 		return true;				
+		// 	} catch (err) {
+		// 		throw new Error(err.responseJSON.message);
+		// 	}
+		// }
+
 		function redirectAfterLogin() {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Redirecting...')});
 
@@ -293,8 +377,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 					.fail( (error) => reject(error));
 			});
 		}
-		// checks if the email associated with access token is registered
-		// and if so how many accounts use this email
+
 		function checkEmailStatus(accessToken) {
 			return new Promise(async (resolve, reject) => {
 				$.post(Routing.generate('kaikmediaauthmodule_facebook_checkemail'), { accessToken: accessToken})
@@ -302,11 +385,34 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 					.fail( (error) => reject(error));
 			});
 		}
-		// checks if the email associated with access token is registered
-		// and if so how many accounts use this email
+
 		function connectAccount(accessToken, account) {
 			return new Promise(async (resolve, reject) => {
 				$.post(Routing.generate('kaikmediaauthmodule_facebook_connectaccount'), { accessToken: accessToken, account: account})
+					.done( (response) => resolve(response) )
+					.fail( (error) => reject(error));
+			});
+		}
+
+		function disconnectAccount(accessToken) {
+			return new Promise(async (resolve, reject) => {
+				$.post(Routing.generate('kaikmediaauthmodule_facebook_disconnectaccount'), { accessToken: accessToken})
+					.done( (response) => resolve(response) )
+					.fail( (error) => reject(error));
+			});
+		}
+
+		function updateNameAction(accessToken) {
+			return new Promise(async (resolve, reject) => {
+				$.post(Routing.generate('kaikmediaauthmodule_facebook_updatename'), { accessToken: accessToken})
+					.done( (response) => resolve(response) )
+					.fail( (error) => reject(error));
+			});
+		}
+
+		function updateAvatarAction(accessToken) {
+			return new Promise(async (resolve, reject) => {
+				$.post(Routing.generate('kaikmediaauthmodule_facebook_updateavatar'), { accessToken: accessToken})
 					.done( (response) => resolve(response) )
 					.fail( (error) => reject(error));
 			});
@@ -327,7 +433,15 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 					.fail( (error) => reject(error));
 			});
 		}
-		
+// account
+		function getFacebookUserAccount(accessToken) {
+			return new Promise(async (resolve, reject) => {
+				$.post(Routing.generate('kaikmediaauthmodule_facebook_getaccount'), { accessToken: accessToken})
+					.done( (response) => resolve(response) )
+					.fail( (error) => reject(error));
+			});
+		}
+
 // Display
 		// create modal
 		function startStatusModal() {
@@ -440,6 +554,55 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			return;
 		}
 
+		function areMultipleAccountsAllowed() {
+			let multipleAccountsAllowed = KaikMedia.Auth.Config.Global.getVar('multipleSameAccountsAllowed', false);
+			if (!multipleAccountsAllowed || multipleAccountsAllowed == '0') {
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+		function getRedirectToHomePathsArray() {
+			let paths = KaikMedia.Auth.Config.FB.getVar('redirectHomePaths', '');
+
+			return paths.split(',');
+		}
+
+		function loadButtons() {
+			$buttons = $("a:contains('kaikmedia_auth_facebook_button_')");
+			$buttons.each((index, element) => {
+				$(element).hide(); // hide it... kind of helps...
+				$(element).replaceWith(generateButton(decodeButtonData($(element).text())));
+			})
+		};
+
+		function decodeButtonData(string) {
+			let data = string.substring('kaikmedia_auth_facebook_button_'.length).split("-")
+			var options = {
+				size : data[0],
+				button: data[1],
+				layout: data[2],
+				auto_logout_link: data[3] == 'yes' ? true : false,
+				use_continue_as: data[4] == 'yes' ? true : false,
+			};
+
+			return options;
+		};
+
+		function generateButton(options) {
+			$button = $('<div class="fb-login-button"></div>');
+			$button.attr('data-size', options.size);
+			$button.attr('data-button-type', options.button);
+			$button.attr('data-layout', options.layout);
+			$button.attr('auto_logout_link', options.auto_logout_link);       
+			$button.attr('data-use-continue-as', options.use_continue_as);       
+			$button.attr('scope', "public_profile,email");
+			$button.attr('onlogin', "KaikMedia.Auth.facebook.logInRegister();");
+
+			return $button;
+		};
+
 // Zikula Accounts Chooser
 		function getAccountChooser(accounts) {
 			if (!accounts) {
@@ -477,7 +640,6 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 		function getLoginStatus() {
 			return new Promise(async (resolve) => {
 				FB.getLoginStatus((response) => {
-					console.log('FB.getLoginStatus',response);
 					resolve(response);
 				});
 			});
@@ -578,6 +740,16 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			$modal.modal(options);
 		}
 
+		function getSDKLanguage() {
+
+			let langMap = {
+				'en': 'en_US',
+				'pl': 'pl_PL',
+				'de': 'de_DE',
+			};
+
+			return langMap[Zikula.Config.lang] !== 'undefined' ? langMap[Zikula.Config.lang] : 'en_US' ;
+		}
 		function getScript() {
 			return new Promise((resolve) => {
 				if (window.FB) {
@@ -589,7 +761,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				if (document.getElementById(id)) {
 					return;
 				}
-				const locale = 'en_US';
+				const locale = getSDKLanguage();
 				const js = document.createElement('script');
 				js.id = id;
 				js.src = '//connect.facebook.net/'+ locale +'/sdk.js';
@@ -614,6 +786,10 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			init: init,
 			logInRegister: logInRegister,
 			getScript: getScript,
+			updateAvatar: updateAvatar,
+			updateName: updateName,
+			disconnect: disconnect,
+			revoke: revoke
 		};
 	})();
 

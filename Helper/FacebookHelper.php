@@ -492,7 +492,7 @@ class FacebookHelper extends AbstractProvider
         // confirm access token with facebook by loading user data
         // as $this->user
         $this->loadResourceOwnerData(true);
-
+        // dump($this->getUser());
         // no errors - actual starting local session by storing token 
         $this->setSessionToken();
         $this->setSessionResourceOwnerData();

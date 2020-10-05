@@ -41,5 +41,10 @@ services:
             - "@validator"
             - "@zikula_zauth_module.api.password"
 
+    kaikmedia_auth_module.helper.avatar_helper:
+        class: Kaikmedia\AuthModule\Helper\AvatarHelper
+        arguments:
+            - "@=service('zikula_extensions_module.api.variable').getAll('ZikulaProfileModule')"
+            - "@=service('zikula_extensions_module.api.variable').get('ZikulaUsersModule', 'avatarpath', 'images/avatar')"
 # FIELDS
 

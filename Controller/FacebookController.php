@@ -12,6 +12,8 @@
 
 namespace Kaikmedia\AuthModule\Controller;
 
+use Gedmo\Mapping\Annotation\Uploadable;
+use Kaikmedia\AuthModule\Constant;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -31,6 +33,7 @@ use Zikula\UsersModule\HookSubscriber\LoginUiHooksSubscriber;
 use Zikula\UsersModule\Constant as UsersConstant;
 use Zikula\OAuthModule\Entity\MappingEntity;
 use Zikula\UsersModule\RegistrationEvents;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * Class FacebookController
@@ -210,6 +213,41 @@ class FacebookController extends AbstractController
     }
 
     /**
+     * @Route("/disconnectaccount", methods = {"POST", "GET"}, options={"expose"=true})
+     *
+     * @param Request $request Current request instance
+     *
+     * @return JsonResponse
+     **/
+    public function disconnectAccountAction(Request $request)
+    {
+        if (!$this->hasPermission('KaikmediaAuthModule', 'facebok:disconnectaccount:', ACCESS_OVERVIEW)) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Access Denied')], 401);
+        }
+
+        try {
+            $this->setFacebookHelper();
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+        }
+
+        $fbUserId = $this->facebookHelper->getFacebookUserId();
+        if (!$fbUserId) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Facebook user id is missing!')], 400);
+        }
+
+        $mappingRepository = $this->get('zikula_oauth_module.mapping_repository');
+        $uid = $mappingRepository->getZikulaId(Constant::ALIAS_FACEBOOK, $fbUserId);
+        if (!$uid) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Account is not connected')], 400);
+        }
+
+        $mappingRepository->removeByZikulaId($uid);
+
+        return new JsonResponse(['status' => 'disconnected']);
+    }
+
+    /**
      * @Route("/login", methods = {"POST", "GET"}, options={"expose"=true})
      *
      * @param Request $request Current request instance
@@ -350,6 +388,162 @@ class FacebookController extends AbstractController
         $dispatcher->dispatch(RegistrationEvents::REGISTRATION_SUCCEEDED, new GenericEvent($userEntity));
 
         return new JsonResponse(['status' => 'registered', 'account' => $data]);
+    }
+
+    /**
+     * @Route("/getaccount", methods = {"POST", "GET"}, options={"expose"=true})
+     *
+     * @param Request $request Current request instance
+     *
+     * @return JsonResponse
+     **/
+    public function getAccountAction(Request $request)
+    {
+        if (!$this->hasPermission('KaikmediaAuthModule', 'facebok:getaccount:', ACCESS_OVERVIEW)) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Access Denied')], 401);
+        }
+
+        try {
+            $this->setFacebookHelper();
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+        }
+
+        $facebookUser = $this->facebookHelper->getUser();
+        if (!$facebookUser) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Facebook user is missing!')], 400);
+        }
+
+        return new JsonResponse(['status' => 'success', 'fbUser' => $facebookUser->toArray()]);
+    }
+
+    /**
+     * @Route("/updateavatar", methods = {"POST", "GET"}, options={"expose"=true})
+     *
+     * @param Request $request Current request instance
+     *
+     * @return JsonResponse
+     **/
+    public function updateAvatarAction(Request $request)
+    {
+        if (!$this->hasPermission('KaikmediaAuthModule', 'facebok:updateavatar:', ACCESS_OVERVIEW)) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Access Denied')], 401);
+        }
+
+        try {
+            $this->setFacebookHelper();
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+        }
+
+        $facebookUser = $this->facebookHelper->getUser();
+        if (!$facebookUser) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Facebook user is missing!')], 400);
+        }
+
+        $mappingRepository = $this->get('zikula_oauth_module.mapping_repository');
+        $uid = $mappingRepository->getZikulaId(Constant::ALIAS_FACEBOOK, $facebookUser->getId());
+        if (!$uid) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Account is not connected')], 400);
+        }
+
+        $userRepository = $this->get('zikula_users_module.user_repository');
+        $user = $userRepository->find($uid);
+        if (!$user) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Account not found')], 400);
+        }
+
+        try {
+            $avatarHelper = $this->get('kaikmedia_auth_module.helper.avatar_helper');
+            $avatarFileName = $avatarHelper->handleDownload($facebookUser->getPictureUrl() , $uid);
+            $user->setAttribute('zpmpp:avatar', $avatarFileName);
+            $this->getDoctrine()->getManager()->flush();
+            $avatarSrc = $avatarHelper->getAvatarSrc($avatarFileName);
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+        }
+
+        return new JsonResponse(['status' => 'success', 'src' => $request->getSchemeAndHttpHost() . $request->getBasePath() . '/' . $avatarSrc ]);
+    }
+
+    /**
+     * @Route("/updatename", methods = {"POST", "GET"}, options={"expose"=true})
+     *
+     * @param Request $request Current request instance
+     *
+     * @return JsonResponse
+     **/
+    public function updateNameAction(Request $request)
+    {
+        if (!$this->hasPermission('KaikmediaAuthModule', 'facebok:updatename:', ACCESS_OVERVIEW)) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Access Denied')], 401);
+        }
+
+        try {
+            $this->setFacebookHelper();
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+        }
+
+        $facebookUser = $this->facebookHelper->getUser();
+        if (!$facebookUser) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Facebook user is missing!')], 400);
+        }
+
+        $mappingRepository = $this->get('zikula_oauth_module.mapping_repository');
+        $uid = $mappingRepository->getZikulaId(Constant::ALIAS_FACEBOOK, $facebookUser->getId());
+        if (!$uid) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Account is not connected')], 400);
+        }
+
+        $userRepository = $this->get('zikula_users_module.user_repository');
+        $user = $userRepository->find($uid);
+        if (!$user) {
+            return new JsonResponse(['status' => 'error', 'message' => $this->__('Account not found')], 400);
+        }
+
+        $user->setAttribute('zpmpp:realname', $facebookUser->getName());
+        $this->getDoctrine()->getManager()->flush();
+
+        return new JsonResponse(['status' => 'success', 'name' => $facebookUser->getName()]);
+    }
+
+    /**
+     * @Route("/preferences", methods = {"GET"})
+     *
+     * @param Request $request Current request instance
+     *
+     * @return JsonResponse
+     **/
+    public function preferencesAction(Request $request)
+    {
+        // hasPermission($level = ACCESS_READ, $throw = true, $component = null, $instance = null, $user = null, $loggedIn = false)
+        $this->get('zikula_intercom_module.access_manager')
+                ->hasPermission(ACCESS_READ, true, 'facebok:preferences:', null, null, true);
+
+        $currentUserUid = $this->get('zikula_users_module.current_user')->get('uid');
+        $userEntity = $this->get('zikula_users_module.user_repository')->find($currentUserUid);
+        $mappingRepository = $this->get('zikula_oauth_module.mapping_repository');
+
+        // idea 1
+        // to save fb calls we will just check if user is connected
+        // if not we will show connect button
+        // if yes we will show name and avatar with button to load user data
+        // everything via js
+
+        // there is a problem with idea 1
+        // user can have multiple zikula accounts
+        // only one account shoudl be connected to fb
+        // so if this uid is not conected the only way to check is to look for facebook id in mapping table
+        // but again if connection will be checked here it might end up with blank api calls
+        // it is better to check this when user clicks connect instead of prechecking here...
+
+        $isConnected = $mappingRepository->findOneBy(['zikulaId' => $currentUserUid]);
+
+        return $this->render('@KaikmediaAuthModule/Facebook/user.preferences.html.twig', [
+            'user' => $userEntity,
+            'isConnected' => $isConnected,
+        ]);
     }
 }
 
