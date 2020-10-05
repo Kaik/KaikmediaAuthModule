@@ -68,7 +68,7 @@ class AccessManager
      * Returns false if use has permissions.
      * On exit, $uid has the user's UID if logged in.
      */
-    public function hasPermission($level = ACCESS_READ, $throw = true, $component = null, $instance = null, $user = null)
+    public function hasPermission($level = ACCESS_READ, $throw = true, $component = null, $instance = null, $user = null, $loggedIn = false)
     {
         $comp = null === $component ? '::' : $component;
         $inst = null === $instance ? '::' : $instance;
@@ -80,6 +80,8 @@ class AccessManager
 
         // if needed additional conditions here
         $allowed = $zkPerms;
+
+        $allowed = !$loggedIn ? $allowed : $this->userApi->isLoggedIn();
 
         // Return status or throw exception
         if (!$allowed && $throw) {
