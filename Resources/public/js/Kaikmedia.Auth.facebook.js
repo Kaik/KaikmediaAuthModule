@@ -105,10 +105,14 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 					return;
 				} 
 
-				// // register new account
-				// // start registration process
+				// register new account
+				// start registration process
 				var registered = await registerZikulaAction(accessToken);
 				if (registered) {
+					// this is done only here
+					// there is no need to update those automatically when user already has an account
+					await updateNameAction(accessToken);
+					await updateAvatarAction(accessToken);
 					await connectLoginRedirectAction(accessToken, registered.uid);
 
 					return;
@@ -332,20 +336,20 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			}
 		}
 
-		// async function preferencesAction(accessToken) {
-		// 	$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Loading data...')});
+		async function preferencesAction(accessToken) {
+			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Loading data...')});
 
-		// 	try {
-		// 		let response = await getFacebookUserAccount(accessToken);
-		// 		$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('Data loaded!')}));
-		// 		$modal.modal('hide');
-		// 		$('#km_auth_user_facebook_preferences_display_connect_button').addClass('hide');
+			try {
+				let response = await getFacebookUserAccount(accessToken);
+				$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('Data loaded!')}));
+				$modal.modal('hide');
+				$('#km_auth_user_facebook_preferences_display_connect_button').addClass('hide');
 
-		// 		return true;				
-		// 	} catch (err) {
-		// 		throw new Error(err.responseJSON.message);
-		// 	}
-		// }
+				return true;				
+			} catch (err) {
+				throw new Error(err.responseJSON.message);
+			}
+		}
 
 		function redirectAfterLogin() {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Redirecting...')});
