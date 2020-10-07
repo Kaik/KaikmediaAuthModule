@@ -30,7 +30,6 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function getAccessToken() {
 			// var authResponse = await getAuthResponse();
-			// console.log(authResponse);
 			var authResponse = await getLoginStatus();
 			if (authResponse.status === 'unknown' || authResponse.status === 'not_authorized') {
 				authResponse = await login();
@@ -217,7 +216,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function startServerSideSessionAction(accessToken) {
 			$row = getStatusModalIconTextRow({ iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Loading user data...')});
-
+			statusModalChangeTitle(Translator.__('Connecting'));
 			try {
 				await startServerSideSession(accessToken);
 				$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('User data loaded')}));
@@ -230,7 +229,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function checkRegistrationStatusAction(accessToken) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Looking for connected account...')});
-
+			statusModalChangeTitle(Translator.__('Checking'));
 			try {
 				var isRegisteredCheck = await checkRegistrationStatus(accessToken);
 				if (isRegisteredCheck.status == 'found') {
@@ -246,7 +245,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function connectAccountAction(accessToken, account) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Connecting...')});
-
+			statusModalChangeTitle(Translator.__('Connecting'));
 			try {
 				await connectAccount(accessToken, account);
 				$row.html(getIconTextCol({iconClass:'fa fa-check text-success', text: Translator.__('Connected.')}));
@@ -257,6 +256,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function disconnectAccountAction(accessToken) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Disconnecting...')});
+			statusModalChangeTitle(Translator.__('Disconnecting'));
 
 			try {
 				await disconnectAccount(accessToken);
@@ -268,6 +268,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function checkEmailStatusAction(accessToken) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Checking email...')});
+			statusModalChangeTitle(Translator.__('Checking email'));
 
 			try {
 				var emailCheck = await checkEmailStatus(accessToken);
@@ -289,13 +290,14 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 					return false;
 				} else {
-					throw new Error(Translator.__('Unknow error occured please try again.'));
+					throw new Error(Translator.__('Unknow error occured. Please try again.'));
 				}
 			} catch (err) { throw new Error(err.responseJSON.message);}
 		}
 
 		async function logInZikulaAction(accessToken, account) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Logging in...')});
+			statusModalChangeTitle(Translator.__('Logging in'));
 
 			try {
 				await logIn(accessToken, account);
@@ -309,10 +311,12 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function accountChooserAction(accessToken, accounts) {
 			// account choser 
-			let accountsFoundTxt  = accounts.length + Translator.__(' accounts found!') + ' ' + Translator.__('Select account to connect');
-			let foundTxt  = (accounts.length == 1) ? Translator.__('One account found!') : accountsFoundTxt;
+			let accountsFoundTxt  = accounts.length + ' ' + Translator.__('accounts found!') + ' ' + Translator.__('Select account to connect');
+			let foundTxt = (accounts.length == 1) ? Translator.__('One account found!') : accountsFoundTxt;
 
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-check text-success', text: foundTxt});
+			statusModalChangeTitle(Translator.__('Awaiting'));
+			
 			$accountChooser = getAccountChooser(accounts);
 			$accountChooser.on('click', "[data-accountid]", function(e) {
 				e.preventDefault();
@@ -325,6 +329,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function registerZikulaAction(accessToken) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Registering...')});
+			statusModalChangeTitle(Translator.__('Registering...'));
 
 			try {
 				let response = await registerAccount(accessToken);
@@ -338,6 +343,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		async function preferencesAction(accessToken) {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Loading data...')});
+			statusModalChangeTitle(Translator.__('Loading...'));
 
 			try {
 				let response = await getFacebookUserAccount(accessToken);
@@ -353,6 +359,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 
 		function redirectAfterLogin() {
 			$row = getStatusModalIconTextRow({iconClass:'fa fa-circle-o-notch fa-spin', text: Translator.__('Redirecting...')});
+			statusModalChangeTitle(Translator.__('Redirecting...'));
 
 			var currentPathName = window.location.pathname;
 			var redirectHomePaths = getRedirectToHomePathsArray();
@@ -450,10 +457,19 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 		// create modal
 		function startStatusModal() {
 			createModal({
-				title: Translator.__('Registration'),
+				title: Translator.__('Status'),
 				showHeader: true,
 				showFooter: false
 			});
+		}
+
+		function statusModalChangeTitle(text = '') {
+			if (!$modal) {
+				return false;
+			}
+			$modal.find('.modal-title').text(text);
+
+			return true;
 		}
 
 		function statusModalChangeBody(content = '', mode = 'replace') {
@@ -548,7 +564,7 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 		}
 
 		function showError(message) {
-			let errorTxt = message ? message : Translator.__('Unknow error please try again :(');
+			let errorTxt = message ? message : Translator.__('Unknow error occured. Please try again.');
 
 			let icon = getIcon(false, 'fa fa-close')[0].outerHTML;
 			$alert = getDiv(false, 'alert alert-danger', icon + ' ' + errorTxt);
