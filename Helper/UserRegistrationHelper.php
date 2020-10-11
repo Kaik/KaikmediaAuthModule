@@ -220,12 +220,13 @@ class UserRegistrationHelper
         $mapping->setUname($data['uname']);
         $mapping->setEmail($data['email']);
 
-        // @TODO autogenerate passowrd?
         if (empty($data['pass'])) {
-            $mapping->setPass('');
+            $pass = substr(md5(microtime()),rand(0,26),6);
         } else {
-            $mapping->setPass($this->passwordApi->getHashedPassword($data['pass']));
+            $pass = $data['pass'];
         }
+
+        $mapping->setPass($this->passwordApi->getHashedPassword($pass));
 
         // set by settings ? default Native Either
         // @TODO need to get default native method here...
