@@ -524,7 +524,6 @@ class FacebookController extends AbstractController
         $currentUserUid = $this->get('zikula_users_module.current_user')->get('uid');
         $userEntity = $this->get('zikula_users_module.user_repository')->find($currentUserUid);
         $mappingRepository = $this->get('zikula_oauth_module.mapping_repository');
-
         // idea 1
         // to save fb calls we will just check if user is connected
         // if not we will show connect button
