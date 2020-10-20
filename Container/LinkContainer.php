@@ -132,9 +132,11 @@ class LinkContainer implements LinkContainerInterface
         // if ($this->accessManager->hasPermission(ACCESS_ADMIN, false)) {
             $links[] = [
                 'url' => $this->router->generate('kaikmediaauthmodule_facebook_preferences'),
-                'text' => $this->translator->__('Facebook settings'),
-                'title' => $this->translator->__('Facebook settings'),
-                'icon' => 'facebook'];
+                'text' => $this->translator->__('Facebook settings', 'kaikmediaauthmodule'),
+                'title' => $this->translator->__('Facebook settings', 'kaikmediaauthmodule'),
+                'icon' => 'facebook',
+                'order' => 2,
+            ];
         // }
 
         return $links;
