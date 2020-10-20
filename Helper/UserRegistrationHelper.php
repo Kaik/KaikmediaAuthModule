@@ -210,7 +210,8 @@ class UserRegistrationHelper
      */
     public function mapUserAccount(array $data)
     {
-        if (!$this->variableApi->get(Constant::MODNAME, 'registerAsNative', false)) {
+        $globalSettings = $this->variableApi->get(Constant::MODNAME, 'global', []);
+        if (array_key_exists('registerAsNative', $globalSettings) && !$globalSettings['registerAsNative']) {
 
             return;
         }
@@ -238,7 +239,7 @@ class UserRegistrationHelper
 
         // email address constrain validation
         // @TODO should be turned off in case multiple accounts are allowed
-        if (!$this->variableApi->get(Constant::MODNAME, 'multipleSameAccountsAllowed', false)) {
+        if (array_key_exists('multipleSameAccountsAllowed', $globalSettings) && !$globalSettings['multipleSameAccountsAllowed']) {
             if (count($errors) > 0) {
                 $errorsTxt = '';
                 foreach ($errors as $error) {
