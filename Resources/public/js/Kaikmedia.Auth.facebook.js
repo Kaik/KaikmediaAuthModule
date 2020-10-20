@@ -110,9 +110,12 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 				if (registered) {
 					// this is done only here
 					// there is no need to update those automatically when user already has an account
+					await connectAccountAction(accessToken, registered.uid);
 					await updateNameAction(accessToken);
 					await updateAvatarAction(accessToken);
-					await connectLoginRedirectAction(accessToken, registered.uid);
+					// await connectLoginRedirectAction(accessToken, registered.uid);
+					await logInZikulaAction(accessToken, registered.uid);
+					redirectAfterLogin();
 
 					return;
 				} 
@@ -593,7 +596,12 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			$buttons = $("a:contains('kaikmedia_auth_facebook_button_')");
 			$buttons.each((index, element) => {
 				$(element).hide(); // hide it... kind of helps...
-				$(element).replaceWith(generateButton(decodeButtonData($(element).text())));
+				let $div = getDiv();
+				$div.append(generateButton(decodeButtonData($(element).text())));
+				let $divInfo = getDiv(false, false, getPermissionsInfo());
+				$divInfo.append(' ' + Translator.__('Data we use: your profile name, picture and email.'));
+				$div.append($divInfo);
+				$(element).replaceWith($div);
 			})
 		};
 
@@ -621,6 +629,11 @@ KaikMedia.Auth = KaikMedia.Auth || {};
 			$button.attr('onlogin', "KaikMedia.Auth.facebook.logInRegister();");
 
 			return $button;
+		};
+
+		function getPermissionsInfo() {
+			var $icon = getIcon(false, 'fa fa-1x fa-info-circle');
+			return $icon;
 		};
 
 // Zikula Accounts Chooser
