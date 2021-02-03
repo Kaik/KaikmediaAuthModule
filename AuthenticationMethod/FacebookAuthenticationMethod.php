@@ -39,7 +39,7 @@ class FacebookAuthenticationMethod implements ReEntrantAuthenticationMethodInter
 
     public function register(array $data)
     {
-        return false;
+        return true;
     }
 
     public function authenticate(array $data = [])
